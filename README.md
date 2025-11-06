@@ -1,5 +1,47 @@
+# TKJHAT project
+This project includes the TKJHAT SDK and a set of use examples for the University of Oulu course [Computer Systems](https://lovelace.oulu.fi/tietokonej%C3%A4rjestelm%C3%A4t/tietokonej%C3%A4rjestelm%C3%A4t/). 
+
+## Changelogs
+
+### Project changelog
+
+### TKJHAT changelog
+
+### usb-serial-debug changelog
+
 ## Important links
 [TKJHAT library](https://unioulu-ubicomp-programming-courses.github.io/JTKJ-PicoRTOS-Project/)
+
+## List of examples
+
+The **examples folder** contains a list of test programs that you can use to learn how to use different aspects of FreeRTOS and the TKJHAT SDK. The following list contains a description of each example and the target necessary to compile and run the code between parenthesis.
+
+### Hello Pico
+
+* **hello_pico** (*hello_pico*): Another Hello World app for the Raspberry Pi Pico that does not need either FreeRTOS or the TKJHAT SDK. Just print in terminal periodically.
+* **hello_blink** (*hello_blink*): Example application to run without the need of the TKJHAT. It blinks the Raspberry Pi Pico LED. 
+
+### Hello FreeRTOS
+
+* **hello_freertos** (*hello_freertos*): Hello World application for using FreeRTOS. TKJHAT not needed
+* **hello_blink_freertos** (*hello_blink_freertos*): Same as before but the blinking happens inside a FreeRTOS task.
+
+### Hello JTKJHAT
+
+* **hello_hat** (*hello_hat*): Hello World application for the JTKHAT SDK. It tests the buzzer, device LED and the LCD screen 
+* **hat_example** (*hat_example*): Code not finished yet. Few examples to test running different sensors using different tasks. Do not use yet.
+* **hello_dual_cdc** (*hello_dual_cdc*): Example of using the usb-serial-debug to open two different serial ports via USB using TinyUSB library. One of the ports uses the helpers of the usb-serial-debug library instead of ```printf``` to send string to the terminal. 
+* **hat_imu_ex** (*hat_imu_ex*): Example on how to use the IMU sensor in a FreeRTOS task to collect acceleration and gyroscope data and printing it in the terminal. 
+* **hat_imu_display** (*hat_imu_display*): Same as before but module of acceleration data is presented in the LCD display. Two FreeRTOS tasks in use: one to collect data and other to print datat in the LCD.
+* **hat_imu_cdc_ex**(*hat_imu_cdc_ex*): Another example of collecting data using the IMU. In this case data is sent to two different terminals using the usb-serial-debug library. 
+* **hello_microphone** (*test_microphone*): Application that configures and sets up the microphone using the JTKJSDK api. Collects microphone sample. PCM samples are sent to the terminal. The script located at *tools/record_audio.sh* can be used to collect the samples and added to a .wav file that can be played. It needs to have Sox as dependency.  The file *tools/play_stream_audio.sh* plays directly the audio, storing it first in a buffer. 
+
+### Computer System Course specific examples
+
+* **compilation_errors** (*compilation_error*): This code is a broken code that is used in the lab session 2 of the course [Computer Systems](https://lovelace.oulu.fi/tietokonej%C3%A4rjestelm%C3%A4t/tietokonej%C3%A4rjestelm%C3%A4t/)
+* **hello_serial_client** (*hello_serial_client*): It uses the protocol of the [https://github.com/Gr701/serial_client|Serial-client] application, used to translate ```.``` and ```-``` to Morse code. It only sends data to the application.  
+* **hello_serial_bidirectional_client** (*hello_serial_client*): It uses the protocol of the [https://github.com/Gr701/serial_client|Serial-client] application, used to translate ```.``` and ```-``` to Morse code. It sends data to the application and is able to process received data and echo it as a comment to the Serial-client application.  
+
 
 ## Installation in Linux with VSCode extension
 
