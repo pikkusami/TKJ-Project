@@ -3,11 +3,18 @@ This project includes the TKJHAT SDK and a set of use examples for the Universit
 
 ## Changelogs
 
+
 ### Project changelog
 
 ### TKJHAT changelog
 
+* **0.82**: Solved bug that under certain circusntances did not allow to init correctly the IMU, making the I2C get stuck and without possibility of being used again.
+* **0.81**: Refactor IMU function to start sampling with default values
+* **0.80**: First official version.
+
 ### usb-serial-debug changelog
+
+* **0.80** Initial working version
 
 ## Important links
 [TKJHAT library](https://unioulu-ubicomp-programming-courses.github.io/JTKJ-PicoRTOS-Project/)

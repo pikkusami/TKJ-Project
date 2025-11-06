@@ -1,5 +1,5 @@
 /*
-Version 0.8
+Version 0.82
 
 MIT License
 
@@ -34,7 +34,7 @@ SOFTWARE.
  * \par Contributors
  * Emil Kelhala
  * 
- * @version 0.8
+ * @version 0.82
  *
  * @details
  * This SDK provides simple functions to use the main hardware on the JTKJ HAT:
