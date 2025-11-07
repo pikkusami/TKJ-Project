@@ -7,22 +7,45 @@
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <task.h>
+#include <intctrl.h> // Täältä saatiin tuo UART0_IRQ toimimaan
 
 #include "tkjhat/sdk.h"
 
 // Default stack size for the tasks. It can be reduced to 1024 if task is not using lot of memory.
-#define DEFAULT_STACK_SIZE 2048 
+#define DEFAULT_STACK_SIZE 2048
+#define buffer_len 1024
 
 //Add here necessary states
-enum state { IDLE=1 };
+enum state { IDLE=1, RECEIVING, TRANSMITTING };
 enum state programState = IDLE;
 
-static void example_task(void *arg){
-    (void)arg;
+uint8_t buffer[buffer_len];
 
-    for(;;){
-        tight_loop_contents(); // Modify with application code here.
-        vTaskDelay(pdMS_TO_TICKS(2000));
+// Käsittelijäfunktio
+void uartFxn() {
+    uart_getc(uart0); // Luetaan vastaanotettu merkki
+}
+
+// Taskifunktio
+void uartTask (void *pvParams) {
+    // Alustetaan UART0
+    uart_init(uart0, 9600);
+
+    gpio_set_function(0, GPIO_FUNC_UART); // TX
+    gpio_set_function(1, GPIO_FUNC_UART); // RX
+
+    // Asetetaan keskeytyksen käsittelijä uartFxn UART0:n keskeytyksille
+    irq_set_exclusive_handler(UART0_IRQ, uartFxn);
+    // Vastaanotetaan keskeytyksiä
+    irq_set_enabled(UART0_IRQ, true);
+
+    // Kerrotaan UART:lle, että halutaan vastaanottaa keskeytyksiä, kun dataa on luettavissa
+    uart_set_irq_enables(uart0, true, false);
+
+
+    while(1) {
+        // Ikuinen loop
+        tight_loop_contents();
     }
 }
 
@@ -37,8 +60,8 @@ int main() {
 
     TaskHandle_t myExampleTask = NULL;
     // Create the tasks with xTaskCreate
-    BaseType_t result = xTaskCreate(example_task,       // (en) Task function
-                "example",              // (en) Name of the task 
+    BaseType_t result = xTaskCreate(uartTask,       // (en) Task function
+                "uartTask",              // (en) Name of the task 
                 DEFAULT_STACK_SIZE, // (en) Size of the stack for this task (in words). Generally 1024 or 2048
                 NULL,               // (en) Arguments of the task 
                 2,                  // (en) Priority of this task
