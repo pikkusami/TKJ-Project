@@ -5,16 +5,21 @@ This project includes the TKJHAT SDK and a set of use examples for the Universit
 
 
 ### Project changelog
+* **0.84** *(11-11-2025)* Updated the README.md files including changelog and list of examples. Version 0.83 of TKJHAT. Created hat_imu_display (not in course repo)
+* **0.83** *(28-10-2025)* Added serial client examples: hello_serial_bidirectional_client and hello_serial_client. 
+* **0.82** *(22-10-2025)* TKJHat version 0.82. Added example hat_imu_ex and hat_imu_cdc_ex
+* **0.81** *(13-10-2025)* Added hat examples: hello_hat, hat_example. Solved problem in toolchain with Ninja path. Version 0.81 of the TKJHAT
+* **0.80** *(05-10-2025)* First version ready.
 
 ### TKJHAT changelog
-
-* **0.82**: Solved bug that under certain circusntances did not allow to init correctly the IMU, making the I2C get stuck and without possibility of being used again.
-* **0.81**: Refactor IMU function to start sampling with default values
-* **0.80**: First official version.
+* **0.83** *(11-11-2025)*: Restructured documentation. Including names for pins. Restructured the topics section. 
+* **0.82** *(22-10-2025)*: Solved bug that under certain circunstances did not allow to init correctly the IMU, making the I2C get stuck and without possibility of being used again. Corrected some links in documentation.
+* **0.81** *(13-10-2025)*: Refactor IMU function to start sampling with default values. Hat initialization now includes I2C.
+* **0.80** *(05-10-2025)*: First official version.
 
 ### usb-serial-debug changelog
 
-* **0.80** Initial working version
+* **0.80** *(05-10-2025)*:Initial working version
 
 ## Important links
 [TKJHAT library](https://unioulu-ubicomp-programming-courses.github.io/JTKJ-PicoRTOS-Project/)
