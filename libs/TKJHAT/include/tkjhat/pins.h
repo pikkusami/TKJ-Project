@@ -1,32 +1,39 @@
-/*
-Version 0.8
-
-MIT License
-
-Copyright (c) 2025 Raisul Islam, Iván Sánchez Milara
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
 /* =========================
  *  Board / pin macros
  * ========================= */
+
+/**
+ * @defgroup board_pins Board and pin definitions
+ * @brief Default GPIO assignments for peripherals on the JTKJ HAT.
+ *
+ * @details
+ * These macros define the GPIO pin numbers for peripherals and interfaces
+ * used by the SDK. They can be referenced directly or overridden at compile time
+ * if custom wiring is used.
+ *
+ * **Default pinout:**
+ * | Function | Macro | GPIO | Notes |
+ * |-----------|--------|------|-------|
+ * | I²C SDA   | @ref DEFAULT_I2C_SDA_PIN | 12 | Default I²C data |
+ * | I²C SCL   | @ref DEFAULT_I2C_SCL_PIN | 13 | Default I²C clock |
+ * | UART0     | @ref DEFAULT_UART_0      | 0  | Primary UART port |
+ * | UART1     | @ref DEFAULT_UART_1      | 1  | Secondary UART port |
+ * | SW1       | @ref SW1_PIN / @ref BUTTON1 | 2  | User button 1 |
+ * | SW2       | @ref SW2_PIN / @ref BUTTON2 | 22 | User button 2 |
+ * | Red LED   | @ref RED_LED_PIN / @ref LED1 | 14 | Onboard LED |
+ * | RGB LED R | @ref RGB_LED_R | 18 | RGB red channel |
+ * | RGB LED G | @ref RGB_LED_G | 19 | RGB green channel |
+ * | RGB LED B | @ref RGB_LED_B | 20 | RGB blue channel |
+ * | Buzzer    | @ref BUZZER_PIN | 17 | Active buzzer |
+ * | PDM DATA  | @ref PDM_DATA | 16 | Microphone data line |
+ * | PDM CLK   | @ref PDM_CLK | 15 | Microphone clock line |
+ * | VEML6030 Interrupt | @ref VEML6030_INTERRUPT | 9  | Light sensor INT pin |
+ * | HDC2021 Interrupt  | @ref HDC2021_INTERRUPT | 21 | Temp/humidity INT pin |
+ * | ICM42670 Interrupt | @ref ICM42670_INT | 6  | IMU INT1 pin |
+ *
+ * @note These pin numbers correspond to the Raspberry Pi Pico GPIO numbers.
+ * @{
+ */
 
 #define DEFAULT_I2C_SDA_PIN                     12
 #define DEFAULT_I2C_SCL_PIN                     13
@@ -34,7 +41,7 @@ SOFTWARE.
 #define DEFAULT_UART_0                          0
 #define DEFAULT_UART_1                          1
 
-#define SW1_PIN                                 02
+#define SW1_PIN                                 2
 #define SW2_PIN                                 22
 #define BUTTON1                                 SW1_PIN
 #define BUTTON2                                 SW2_PIN
@@ -54,3 +61,5 @@ SOFTWARE.
 #define VEML6030_INTERRUPT                      9
 #define HDC2021_INTERRUPT                       21
 #define ICM42670_INT                            6
+
+/** @} */ /* end of group board_pins */
