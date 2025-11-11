@@ -1,3 +1,16 @@
+
+
+
+/**
+ * @file tkjhat/pins.h
+ * \author Iván Sánchez Milara
+ * @brief Macros including the pins of the HAT.
+ *
+ * 
+ * @version 0.83
+ */
+ 
+
 /* =========================
  *  Board / pin macros
  * ========================= */
@@ -35,31 +48,65 @@
  * @{
  */
 
-#define DEFAULT_I2C_SDA_PIN                     12
-#define DEFAULT_I2C_SCL_PIN                     13
+/** @name I²C Bus (default)
+ *  Pins used for the I²C bus connected to sensors and the display.
+ *  @{
+ */
+#define DEFAULT_I2C_SDA_PIN   12  /**< I²C data pin (SDA) */
+#define DEFAULT_I2C_SCL_PIN   13  /**< I²C clock pin (SCL) */
+/** @} */
 
-#define DEFAULT_UART_0                          0
-#define DEFAULT_UART_1                          1
+/** @name UART interfaces
+ *  @{
+ */
+#define DEFAULT_UART_0        0   /**< UART0 identifier */
+#define DEFAULT_UART_1        1   /**< UART1 identifier */
+/** @} */
 
-#define SW1_PIN                                 2
-#define SW2_PIN                                 22
-#define BUTTON1                                 SW1_PIN
-#define BUTTON2                                 SW2_PIN
+/** @name Buttons / Switches
+ *  @{
+ */
+#define SW1_PIN               2   /**< SW1 button pin (GPIO 2) */
+#define SW2_PIN               22  /**< SW2 button pin (GPIO 22) */
+#define BUTTON1               SW1_PIN  /**< Alias for SW1 button */
+#define BUTTON2               SW2_PIN  /**< Alias for SW2 button */
+/** @} */
 
-#define RED_LED_PIN                             14
-#define LED1                                    RED_LED_PIN
+/** @name LEDs
+ *  @{
+ */
+#define RED_LED_PIN           14  /**< Onboard red LED pin (GPIO 14) */
+#define LED1                  RED_LED_PIN /**< Alias for red LED */
+/** @} */
 
-#define RGB_LED_R                               18
-#define RGB_LED_G                               19
-#define RGB_LED_B                               20
+/** @name RGB LED (common-anode)
+ *  @{
+ */
+#define RGB_LED_R             18  /**< RGB LED red channel (GPIO 18) */
+#define RGB_LED_G             19  /**< RGB LED green channel (GPIO 19) */
+#define RGB_LED_B             20  /**< RGB LED blue channel (GPIO 20) */
+/** @} */
 
-#define BUZZER_PIN                              17
+/** @name Audio
+ *  @{
+ */
+#define BUZZER_PIN            17  /**< Buzzer control pin (GPIO 17) */
+/** @} */
 
-#define PDM_DATA                                16
-#define PDM_CLK                                 15
+/** @name PDM Microphone
+ *  @{
+ */
+#define PDM_DATA              16  /**< Microphone data input (GPIO 16) */
+#define PDM_CLK               15  /**< Microphone clock output (GPIO 15) */
+/** @} */
 
-#define VEML6030_INTERRUPT                      9
-#define HDC2021_INTERRUPT                       21
-#define ICM42670_INT                            6
+/** @name Interrupts from Sensors
+ *  @{
+ */
+#define VEML6030_INTERRUPT    9   /**< Ambient light sensor interrupt pin */
+#define HDC2021_INTERRUPT     21  /**< Temperature & humidity sensor interrupt pin */
+#define ICM42670_INT          6   /**< IMU interrupt pin */
+/** @} */
+
 
 /** @} */ /* end of group board_pins */

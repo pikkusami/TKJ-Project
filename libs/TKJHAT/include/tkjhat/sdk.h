@@ -27,14 +27,14 @@ SOFTWARE.
 
 /**
  * @file tkjhat/sdk.h
- * \author Raisul Islam
- * \author Iván Sánchez Milara
  * @brief Public API for the JTKJ HAT SDK (Raspberry Pi Pico / Pico 2).
  *
- * \par Contributors
+ * @author Raisul Islam
+ * @author Iván Sánchez Milara
+ * @version 0.83
+ *
+ * @par Contributors
  * Emil Kelhala
- * 
- * @version 0.82
  *
  * @details
  * This SDK provides simple functions to use the main hardware on the JTKJ HAT:
@@ -42,57 +42,58 @@ SOFTWARE.
  * - **User inputs**
  *   - Two buttons: SW1 (GPIO 2), SW2 (GPIO 22)
  *
- * - **Indicators / output**
+ * - **Indicators / outputs**
  *   - One red LED (GPIO 14)
  *   - One RGB LED (GPIO 18:R, 19:G, 20:B) driven by PWM
  *   - Buzzer (GPIO 17)
- *   - 0.96" SSD1306 I2C OLED display (addr 0x3C)
- *
+ *   - 0.96 inches SSD1306 I2C OLED display (addr 0x3C)
+ * 
  * - **Sensors**
  *   - VEML6030 ambient light sensor (I2C addr 0x10)
  *   - HDC2021 temperature & humidity sensor (I2C addr 0x40)
- *   - ICM-42670 IMU: 3-axis accelerometer + 3-axis gyroscope (I2C addr 0x69 / 0x69 alt autodetect)
+ *   - ICM-42670 IMU: 3-axis accelerometer + 3-axis gyroscope
+ *     (I2C addr 0x68 or 0x69; autodetected)
  *   - PDM MEMS microphone (DATA GPIO 16, CLK GPIO 15) via PIO + OpenPDM2PCM
  *
  * - **I2C defaults**
  *   - SDA GPIO 12, SCL GPIO 13
- *
+ * 
+ * 
  * The API aims to be minimal and easy to use in teaching settings. Most functions are
  * non-blocking and configure the required pins/peripherals for basic operation. For more
  * advanced control (e.g., custom I2C transfers), helper functions are also provided.
  *
  * ### Typical usage
- * @code
+ * 
+ * @code{.c}
  * #include <tkjhat/sdk.h>
  *
  * int main(void) {
  *     stdio_init_all();
  *
- *     init_hat_sdk();          // put board in a known state (e.g., RGB off) and start default i2c
+ *     init_hat_sdk();          // put board in a known state (e.g., RGB off) and start default I2C
  *     init_red_led();          // optional: prepare red LED
  *     init_rgb_led();          // optional: enable RGB PWM
  *
  *     init_display();          // SSD1306 ready to use
  *     write_text("Hello HAT"); // draw text
  *
- *     ICM42670_init();                         // IMU WHO_AM_I + basic setup
+ *     init_ICM42670();                        // IMU WHO_AM_I + basic setup
  *     ICM42670_startAccel(100, 4);            // 100 Hz, ±4 g
  *     ICM42670_startGyro(100, 250);           // 100 Hz, ±250 dps
  *     ICM42670_enable_accel_gyro_ln_mode();   // low-noise mode
- *
- *     // ...
  * }
  * @endcode
  *
  * ### Notes
- * - `init_hat_sdk()` only prepares the board state (e.g., turns RGB LED off) and initialize default I2C to connect the peripherals
- *    It does **not** initialize peripherals; call the per-device init functions you need.
+ * - `init_hat_sdk()` prepares board state (e.g., turns RGB LED off) and initializes the default I2C bus.
+ *   It does **not** initialize peripherals; call the per-device init functions you need.
  *
  * ### Dependencies
  * - Raspberry Pi Pico SDK (GPIO, PWM, I2C, PIO, DMA where applicable)
  * - (Optional) FreeRTOS if used elsewhere in the application
  * - OpenPDM2PCM (bundled) for microphone PCM conversion
- * - pico-ssd1306 (bundled) for OLED display support - https://github.com/daschr/pico-ssd1306
+ * - pico-ssd1306 (bundled) for OLED display support — https://github.com/daschr/pico-ssd1306
  *
  * @copyright
  * MIT License — see the header for full text.
@@ -121,26 +122,27 @@ SOFTWARE.
  * ========================= */
 
 /**
- * @defgroup VEML6030_Registers VEML6030 Register Definitions
- * @brief Register addresses and constants for the VEML6030 ambient light sensor.
+ * @defgroup Macros Macros including addresses and registers of peripherals 
+ * @brief Register addresses and constants for the different sensors and actuators of the HAT.
  * @{
  */
-#define VEML6030_I2C_ADDR                       0x10   /**< I²C address of the VEML6030 sensor. */
+
+/** @name VEML6030
+ *  Light sensor address, and registers
+ *  @{ */
+#define VEML6030_I2C_ADDR                       0x10   /**< I2C address of the VEML6030 sensor. */
 #define VEML6030_CONFIG_REG                     0x00   /**< Configuration register. */
 #define VEML6030_ALS_REG                        0x04   /**< Ambient Light Sensing (ALS) data register. */
 /** @} */
-
 
 /* =========================
  *  HDC2021
  * ========================= */
 
-/**
- * @defgroup HDC2021_Registers HDC2021 Register Definitions
- * @brief Register addresses for the HDC2021 temperature and humidity sensor.
- * @{
- */
-#define HDC2021_I2C_ADDRESS                     0x40   /**< I²C address of the HDC2021 sensor. */
+ /** @name HDC2021
+ *  Humidity sensor address, registers and interruptions thresholds
+ *  @{ */
+#define HDC2021_I2C_ADDRESS                     0x40   /**< I2C address of the HDC2021 sensor. */
 #define HDC2021_TEMP_LOW                        0x00   /**< Temperature low byte register. */
 #define HDC2021_TEMP_HIGH                       0x01   /**< Temperature high byte register. */
 #define HDC2021_HUMIDITY_LOW                    0x02   /**< Humidity low byte register. */
@@ -158,44 +160,31 @@ SOFTWARE.
  *  SSD1306
  * ========================= */
 
-/**
- * @defgroup SSD1306_Registers SSD1306 Display Definitions
- * @brief Constants for the SSD1306 128x64 OLED display.
- * @{
- */
-#define SSD1306_I2C_ADDRESS                     0x3C   /**< I²C address of the SSD1306 OLED display. */
+/** @name Display
+ *  SSD1306 display address 
+ *  @{ */
+#define SSD1306_I2C_ADDRESS                     0x3C   /**< I2C address of the SSD1306 OLED display. */
 /** @} */
-
 
 /* =========================
  *  MEMS MICROPHONE
  * ========================= */
-
-/**
- * @defgroup MEMS_MICROPHONE MEMS Microphone Configuration
- * @brief Default configuration for the PDM MEMS microphone.
- * @{
- */
+/** @name Microphone
+ *  Microphone's sampling rate and buffer size. 
+ *  @{ */
 #define MEMS_SAMPLING_FREQUENCY                 8000   /**< Sampling frequency in Hz for PDM microphone. */
 #define MEMS_BUFFER_SIZE                        256    /**< Number of samples in each microphone buffer. */
 /** @} */
-
 
 /* =========================
  *  ICM-42670 (IMU)
  * ========================= */
 
-/**
- * @defgroup ICM42670_Registers ICM-42670 Register Map & Constants
- * @brief Register addresses, field encodings, and defaults for the TDK InvenSense ICM-42670 IMU.
- * @{
- */
-
-/** @name I²C addressing
- *  I²C address and identity registers.
+/** @name I2C addressing
+ *  I2C address and identity registers.
  *  @{ */
-#define ICM42670_I2C_ADDRESS                    0x69   /**< Default I²C address (AD0 pulled). */
-#define ICM42670_I2C_ADDRESS_ALT                0x69   /**< Alternate I²C address (autodetect helper uses both). */
+#define ICM42670_I2C_ADDRESS                    0x69   /**< Default I2C address (AD0 pulled). */
+#define ICM42670_I2C_ADDRESS_ALT                0x69   /**< Alternate I2C address (autodetect helper uses both). */
 #define ICM42670_REG_WHO_AM_I                   0x75   /**< WHO_AM_I register address. */
 #define ICM42670_WHO_AM_I_RESPONSE              0x67   /**< Expected WHO_AM_I value. */
 /** @} */
@@ -283,7 +272,7 @@ SOFTWARE.
 #define ICM42670_SENSOR_DATA_START_REG          0x09   /**< First data register for TEMP/ACCEL/GYRO burst read. */
 /** @} */
 
-/** @} */ /* end of group ICM42670_Registers */
+/** @} */ /* end of group  of registers*/
 
 
 
@@ -293,15 +282,15 @@ SOFTWARE.
  * ========================= */
 
 /**
- * @defgroup i2c_general General initialization and I²C control
+ * @defgroup i2c_general General initialization and I2C control
  * @brief Initialization routines for the JTKJ HAT SDK and helper
- * functions for I²C communication.
+ * functions for I2C communication.
  *
  * @details
  * These functions initialize the SDK environment and provide basic
- * read/write access to devices connected on the default I²C bus.
+ * read/write access to devices connected on the default I2C bus.
  *
- * Connected devices on the JTKJ HAT I²C (default bus):
+ * Connected devices on the JTKJ HAT I2C (default bus):
  * | Device                     | Address | Description                     |
  * |-----------------------------|----------|---------------------------------|
  * | SSD1306 OLED display        | 0x3C     | 128×64 OLED screen              |
@@ -324,10 +313,10 @@ SOFTWARE.
 void init_hat_sdk(void);
 
 /**
- * @brief Initialize an I²C instance with explicit pins.
+ * @brief Initialize an I2C instance with explicit pins.
  *
  * Configures @c i2c_default for Fast-mode (400 kHz), sets @p sda_pin and
- * @p scl_pin to I²C function, and enables pull-ups on both lines.
+ * @p scl_pin to I2C function, and enables pull-ups on both lines.
  *
  * @param sda_pin GPIO to use for SDA (e.g., @ref DEFAULT_I2C_SDA_PIN).
  * @param scl_pin GPIO to use for SCL (e.g., @ref DEFAULT_I2C_SCL_PIN).
@@ -335,7 +324,7 @@ void init_hat_sdk(void);
 void init_i2c(uint sda_pin, uint scl_pin);
 
 /**
- * @brief Initialize the default I²C instance using board default pins.
+ * @brief Initialize the default I2C instance using board default pins.
  *
  * Convenience wrapper that calls:
  * @code
@@ -346,7 +335,7 @@ void init_i2c(uint sda_pin, uint scl_pin);
  * - SDA = @ref DEFAULT_I2C_SDA_PIN  (12)
  * - SCL = @ref DEFAULT_I2C_SCL_PIN  (13)
  *
- * Connected devices on the JTKJ HAT I²C (default bus):
+ * Connected devices on the JTKJ HAT I2C (default bus):
  * - SSD1306 OLED display               (SSD1306_I2C_ADDRESS (0x3C))
  * - VEML6030 ambient light sensor      (VEML6030_I2C_ADDRESS (0x10))
  * - HDC2021 temperature/humidity       (HDC2021_I2C_ADDRESS (0x40))
@@ -357,9 +346,9 @@ void init_i2c(uint sda_pin, uint scl_pin);
 void init_i2c_default(void);
 
 /**
- * @brief Write data to an I²C peripheral.
+ * @brief Write data to an I2C peripheral.
  *
- * Writes a buffer of bytes to the specified I²C address.
+ * Writes a buffer of bytes to the specified I2C address.
  *
  * Typical usage: writing a configuration value to a sensor register.
  *
@@ -369,7 +358,7 @@ void init_i2c_default(void);
  * bool ok = i2c_write(HDC2021_I2C_ADDRESS, data, sizeof(data), false);
  * @endcode
  *
- * @param addr   7-bit I²C device address.
+ * @param addr   7-bit I2C device address.
  * @param src    Pointer to data buffer to transmit.
  * @param len    Number of bytes to write.
  * @param nostop If true, the transfer does not send a STOP
@@ -380,9 +369,9 @@ void init_i2c_default(void);
 bool i2c_write(uint8_t addr, const uint8_t *src, size_t len, bool nostop);
 
 /**
- * @brief Read data from an I²C peripheral.
+ * @brief Read data from an I2C peripheral.
  *
- * Reads a buffer of bytes from the specified I²C address.
+ * Reads a buffer of bytes from the specified I2C address.
  *
  * Typical usage: reading consecutive registers by first writing
  * the register address, then reading back the data.
@@ -399,7 +388,7 @@ bool i2c_write(uint8_t addr, const uint8_t *src, size_t len, bool nostop);
  * float temp_c = (raw * 165.0f / 65536.0f) - 40.0f;  // convert to Celsius
  * @endcode
  *
- * @param addr   7-bit I²C device address.
+ * @param addr   7-bit I2C device address.
  * @param dst    Pointer to destination buffer.
  * @param len    Number of bytes to read.
  * @param nostop If true, the transfer does not send a STOP
@@ -817,22 +806,22 @@ int get_microphone_samples(int16_t *buffer, size_t samples);
 
 /**
  * @defgroup display Display (SSD1306 OLED)
- * @brief Convenience API for the 128×64 SSD1306 I²C OLED display.
+ * @brief Convenience API for the 128×64 SSD1306 I2C OLED display.
  * @details
- * The display is connected to the I²C bus using address @ref SSD1306_I2C_ADDRESS (0x3C).
+ * The display is connected to the I2C bus using address @ref SSD1306_I2C_ADDRESS (0x3C).
  * This module provides simple drawing functions using the bundled
  * [pico-ssd1306 library](https://github.com/daschr/pico-ssd1306).
  *
  * @see SSD1306 datasheet: https://cdn-shop.adafruit.com/datasheets/SSD1306.pdf
  *
  * Default connections:
- * | Signal | I²C Macro | GPIO | Description |
+ * | Signal | I2C Macro | GPIO | Description |
  * |---------|-----------|------|-------------|
- * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I²C data |
- * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I²C clock |
- * | Address | @ref SSD1306_I2C_ADDRESS | 0x3C | OLED I²C address |
+ * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I2C data |
+ * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I2C clock |
+ * | Address | @ref SSD1306_I2C_ADDRESS | 0x3C | OLED I2C address |
  *
- * @pre The I²C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
+ * @pre The I2C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
  * @{
  */
 
@@ -903,7 +892,6 @@ void set_text_cursor (int16_t x0, int16_t y0);
  * @param fill If @c true, draws a filled disk; otherwise, only the outline.
  *
  * @post Calls @c ssd1306_show() once at the end.
- * @complexity O(r)
  */
 void draw_circle(int16_t x0, int16_t y0, int16_t r, bool fill);
 
@@ -961,7 +949,7 @@ void stop_display(void);
  * #include <tkjhat/sdk.h>
  *
  * int main(void) {
- *     init_hat_sdk();      // Initialize I²C (SDA=@ref DEFAULT_I2C_SDA_PIN, SCL=@ref DEFAULT_I2C_SCL_PIN)
+ *     init_hat_sdk();      // Initialize I2C (SDA=@ref DEFAULT_I2C_SDA_PIN, SCL=@ref DEFAULT_I2C_SCL_PIN)
  *     init_display();          // Initialize SSD1306 (@ref SSD1306_I2C_ADDRESS — 0x3C)
  *
  *     clear_display();         // Start clean
@@ -992,19 +980,19 @@ void stop_display(void);
  *
  * @details
  * The VEML6030 is a high-sensitivity ambient light sensor connected
- * through the I²C bus at address @ref VEML6030_I2C_ADDR (0x10).
+ * through the I2C bus at address @ref VEML6030_I2C_ADDR (0x10).
  * It provides a 16-bit dynamic range and adjustable gain and
  * integration time for accurate lux readings.
  *
  * Default connections:
- * | Signal | I²C Macro | GPIO | Description |
+ * | Signal | I2C Macro | GPIO | Description |
  * |---------|-----------|------|-------------|
- * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I²C data |
- * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I²C clock |
- * | Address | @ref VEML6030_I2C_ADDR | 0x10 | Light sensor I²C address |
+ * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I2C data |
+ * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I2C clock |
+ * | Address | @ref VEML6030_I2C_ADDR | 0x10 | Light sensor I2C address |
  * | Interrupt | @ref VEML6030_INTERRUPT | 9 | Optional interrupt output |
  *
- * @pre The I²C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
+ * @pre The I2C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
  *
  * @see SparkFun Guide: https://learn.sparkfun.com/tutorials/qwiic-ambient-light-sensor-veml6030-hookup-guide/all#arduino-library  
  * @see Application Note: https://www.vishay.com/docs/84367/designingveml6030.pdf  
@@ -1045,7 +1033,7 @@ uint32_t veml6030_read_light(void);
  *
  * Places the sensor into a low-power OFF mode by setting the power bit.
  *
- * @note Call @ref veml6030_init again to power it back on and reconfigure.
+ * @note Call @ref veml6030 again to power it back on and reconfigure.
  */
 void veml6030_stop(void);
 
@@ -1089,16 +1077,16 @@ void veml6030_stop(void);
  * @brief API for the Texas Instruments HDC2021 digital temperature and humidity sensor.
  *
  * @details
- * The HDC2021 is a low-power, high-accuracy sensor connected via I²C at
+ * The HDC2021 is a low-power, high-accuracy sensor connected via I2C at
  * address @ref HDC2021_I2C_ADDRESS (0x40). It measures both temperature
  * and relative humidity with 14-bit resolution.
  *
  * Default connections:
- * | Signal | I²C Macro | GPIO | Description |
+ * | Signal | I2C Macro | GPIO | Description |
  * |---------|-----------|------|-------------|
- * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I²C data |
- * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I²C clock |
- * | Address | @ref HDC2021_I2C_ADDRESS | 0x40 | Sensor I²C address |
+ * | SDA | @ref DEFAULT_I2C_SDA_PIN | 12 | I2C data |
+ * | SCL | @ref DEFAULT_I2C_SCL_PIN | 13 | I2C clock |
+ * | Address | @ref HDC2021_I2C_ADDRESS | 0x40 | Sensor I2C address |
  * | Interrupt | @ref HDC2021_INTERRUPT | 21 | Optional alert pin |
  *
  * Default thresholds configured by @ref init_hdc2021_():
@@ -1119,7 +1107,7 @@ void veml6030_stop(void);
  *    float humid = hdc2021_read_humidity();
  *    @endcode
  *
- * @pre The I²C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
+ * @pre The I2C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
  *
  * @see Datasheet: https://www.ti.com/lit/ds/symlink/hdc2021.pdf  
  * @see Usage Guide: https://www.ti.com/lit/ug/snau250/snau250.pdf
@@ -1230,7 +1218,7 @@ float hdc2021_read_humidity(void);
  * @brief API for the TDK InvenSense ICM-42670 6-axis accelerometer + gyroscope.
  *
  * @details
- * The IMU is connected on I²C at @ref ICM42670_I2C_ADDRESS (0x69).
+ * The IMU is connected on I2C at @ref ICM42670_I2C_ADDRESS (0x69).
  *
  * **Recommended defaults**
  * - Accelerometer: ±@ref ICM42670_ACCEL_FSR_DEFAULT g at @ref ICM42670_ACCEL_ODR_DEFAULT Hz  
@@ -1242,7 +1230,7 @@ float hdc2021_read_humidity(void);
  * - This SDK supports Low-Noise (LN) mode (higher precision, higher power).
  * - Other modes (LP/ULP/hybrid) are not implemented in this SDK.
  *
- * @pre The I²C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
+ * @pre The I2C interface must be initialized (use @ref init_i2c_default() or @ref init_hat_sdk()).
  * @see Datasheet: https://invensense.tdk.com/wp-content/uploads/2021/07/DS-000451-ICM-42670-P-v1.0.pdf
  * @{
  */
@@ -1299,7 +1287,7 @@ int ICM42670_enable_accel_gyro_ln_mode(void);
  *                         @ref ICM42670_GYRO_FSR_DEFAULT)
  * - ::ICM42670_enable_accel_gyro_ln_mode()
  *
- * @pre Call ::ICM42670_init() successfully before this function.
+ * @pre Call ::init_ICM42670() successfully before this function.
  *
  * @return 0 on success, negative error code from the first failing call.
  */
@@ -1309,7 +1297,7 @@ int ICM42670_start_with_default_values(void);
  * @brief Read accelerometer, gyroscope, and temperature data.
  *
  * Units:
- * - Acceleration (@p ax, @p ay, @p az) in **g** (where 1 g ≈ 9.81 m/s²).
+ * - Acceleration (@p ax, @p ay, @p az) in **g** (where 1 g ≈ 9.81 m/s2).
  *   At rest, the axis aligned with gravity will read about **±1 g**
  * - Angular rate (@p gx, @p gy, @p gz) in **degrees/second (dps)**.
  * - Temperature (@p t) in **°C**.

@@ -33,7 +33,6 @@ The default I²C bus uses SDA = GPIO 12 (*DEFAULT_I2C_SDA_PIN*) and SCL = GPIO 1
 
 ## Notes
 
-- 
 - The SDK is intended for teaching: APIs are simplified, and defaults (e.g. 100 Hz ODR, ±4 g accelerometer) are chosen to be practical.  
 
 ---
