@@ -7,7 +7,6 @@
 #include <FreeRTOS.h>
 #include <queue.h>
 #include <task.h>
-#include <intctrl.h> // Täältä saatiin tuo UART0_IRQ toimimaan
 
 #include "tkjhat/sdk.h"
 

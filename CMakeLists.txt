@@ -98,7 +98,7 @@ add_subdirectory(examples/hat_imu_ex)
 add_subdirectory(examples/hat_imu_cdc_ex)
 add_subdirectory(examples/hello_serial_client)
 add_subdirectory(examples/hello_serial_bidirectional_client)
-add_subdirectory(examples/hat_imu_display)
+# add_subdirectory(examples/hat_imu_display)
 #
 # You can edit it if you want to add new examples
 # ==============================================================================================
@@ -111,7 +111,7 @@ add_subdirectory(examples/hat_imu_display)
 # Add the source files to be compiled
 # If you add the headers in a different directory, you should use: target_include_directories
 add_executable(${MAIN_TARGET}
-    src/main.c
+    src/template.c
 )
 
 # Links. Add all libraries that application is using. It must at least use the pico_stdlib
