@@ -19,23 +19,24 @@
 #define UNIT_MS 100
 #define BUZZER_FREQUENCY 600
 
-enum state { IDLE=1, RECEIVING, TRANSMITTING };
-enum state programState = IDLE;
+char buffer[buffer_len];
+int currentIndex = 0;
 
-uint8_t buffer[buffer_len];
+enum state { IDLE=1, WRITING, MSG_READY };
+enum state programState = IDLE;
 
 static void btn_fxn(uint gpio, uint32_t eventMask) {
     if (gpio == BUTTON1) {
         if (programState == IDLE) {
-            programState = TRANSMITTING;
-            usb_serial_print("Switched to TRANSMITTING");
+            programState = WRITING;
+            usb_serial_print("Switched to WRITING\n");
         }
-        else {
-            programState = IDLE;
-            usb_serial_print("Switched to IDLE");
+        else if (currentIndex != 0) {
+            programState = MSG_READY;
+            usb_serial_print("Switched to MSG_READY\n");
         }
     }
-    toggle_led(); // Kertoo onko nappia painettu ja onko tilassa TRANSMITTING/IDLE
+    toggle_led(); // Kertoo onko nappia painettu ja onko tilassa WRITING/IDLE
 }
 
 void ledFxn(bool isDot) {
@@ -88,37 +89,35 @@ void imu_task(void *pvParameters) {
     } else {
         usb_serial_print("Failed to initialize ICM-42670P.\n");
     }
-    // Start collection data here. Infinite loop. 
-    uint8_t buf[buffer_len];
-    bool luettu = false;
+    // Start collection data here. Infinite loop.
     while (1)
     {
-        if (programState == TRANSMITTING) {
+        if (programState == WRITING) {
             if (ICM42670_read_sensor_data(&ax, &ay, &az, &gx, &gy, &gz, &t) == 0) {
-                sprintf(buf,"Accel: X=%.2f, Y=%.2f, Z=%.2f | Gyro: X=%.2f, Y=%.2f, Z=%.2f| Temp: %2.2f°C\n", ax, ay, az, gx, gy, gz, t);
-                usb_serial_print(buf);
+                //sprintf(buf,"Accel: X=%.2f, Y=%.2f, Z=%.2f | Gyint currentIndex = 0;ro: X=%.2f, Y=%.2f, Z=%.2f| Temp: %2.2f°C\n", ax, ay, az, gx, gy, gz, t);
+                //usb_serial_print(buf);
 
-                if (ax < -0.7 && luettu == false) {
-                        // lähetetään piste
-                        usb_serial_print(".");
-                        ledFxn(true);
-                        buzzerFnx(true);
-                        luettu = true;
-                    } else if (ax > 0.7 && luettu == false) {
-                        // lähetetään viiva
-                        usb_serial_print("-");
-                        ledFxn(false);
-                        buzzerFnx(false);
-                        luettu = true;
-                    } else if (ay < -0.7 && luettu == false) {
-                        // lähetetään väli
-                        usb_serial_print(" ");
-                        ledFxn(true);
-                        buzzerFnx(true);
-                        luettu = true;
-                    }
-                    
-                    luettu = false;
+                if (ax < -0.7) {
+                    // lähetetään piste
+                    usb_serial_print(".");
+                    buffer[currentIndex++] = '.';
+                    ledFxn(true);
+                    buzzerFnx(true);
+                } else if (ax > 0.7) {
+                    // lähetetään viiva
+                    usb_serial_print("-");
+                    buffer[currentIndex++] = '-';
+                    ledFxn(false);
+                    buzzerFnx(false);
+                } else if (ay < -0.7 && currentIndex != 0) { // Estetään välilyönnillä aloittaminen
+                    // lähetetään väli
+                    usb_serial_print(" ");
+                    buffer[currentIndex++] = ' ';
+                    ledFxn(true);
+                    buzzerFnx(true);
+                } else if (ay > 0.7) {
+                    programState = MSG_READY;
+                }
 
             } else {
                 usb_serial_print("Failed to read imu data\n");
@@ -127,6 +126,20 @@ void imu_task(void *pvParameters) {
         vTaskDelay(pdMS_TO_TICKS(100));
     }
 
+}
+
+void send_task(void *pvParameters) {
+    (void)pvParameters;
+    while (1) {
+        if (programState == MSG_READY) {
+            buffer[currentIndex] = '  \n';
+            usb_serial_print(buffer);
+            currentIndex = 0;
+            memset(buffer, 0, sizeof buffer);
+            programState = IDLE;
+        }
+        vTaskDelay(pdMS_TO_TICKS(1000));
+    }
 }
 
 // ---- Task running USB stack ----
@@ -156,10 +169,11 @@ int main() {
     gpio_set_irq_enabled_with_callback(BUTTON1, GPIO_IRQ_EDGE_RISE, true, btn_fxn);
     gpio_set_irq_enabled(BUTTON2, GPIO_IRQ_EDGE_RISE, true);
 
-    TaskHandle_t hIMUTask, hUsb = NULL;
+    TaskHandle_t hsend_task, hIMUTask, hUsb = NULL;
 
     xTaskCreate(imu_task, "IMUTask", 1024, NULL, 2, &hIMUTask);
     xTaskCreate(usbTask, "usb", 1024, NULL, 3, &hUsb);
+    xTaskCreate(send_task, "sender", 1024, NULL, 2, &hsend_task);
     #if (configNUMBER_OF_CORES > 1)
         vTaskCoreAffinitySet(hUsb, 1u << 0);
     #endif
