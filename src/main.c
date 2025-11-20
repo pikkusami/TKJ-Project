@@ -12,9 +12,9 @@
 #include "usbSerialDebug/helper.h"
 #include "tkjhat/sdk.h"
 
-#if CFG_TUSB_OS != OPT_OS_FREERTOS
-#error "This should be using FREERTOS but the CFG_TUSB_OS is not OPT_OS_FREERTOS"
-#endif
+//#if CFG_TUSB_OS != OPT_OS_FREERTOS
+//#error "This should be using FREERTOS but the CFG_TUSB_OS is not OPT_OS_FREERTOS"
+//#endif
 
 // Default stack size for the tasks. It can be reduced to 1024 if task is not using lot of memory.
 #define DEFAULT_STACK_SIZE 2048
@@ -73,8 +73,8 @@ void buzzerFnx(bool isDot) {
 }
 
 // Print example task
-static void print_task(void *arg) {
-    (void)arg;
+static void print_task(void *pvParameters) {
+    (void)pvParameters;
 
     float ax, ay, az, gx, gy, gz, t;
     // Setting up the sensor. 
@@ -105,13 +105,13 @@ static void print_task(void *arg) {
                     ledFxn(true);
                     buzzerFnx(true);
                     luettu = true;
-                } else if (ay > 0.7 && luettu == false) {
+                } else if (ax > 0.7 && luettu == false) {
                     // lähetetään väli
                     printf(" ");
                     ledFxn(true);
                     buzzerFnx(true);
                     luettu = true;
-                } else if (ay > -0.7 && ay < 0.7) {
+                } else if (ax > -0.7 && ax < 0.7) {
                     luettu = false;
                 }
             } else {
@@ -134,9 +134,10 @@ static void usbTask(void *arg) {
 int main() {
     stdio_init_all();
     // Uncomment this lines if you want to wait till the serial monitor is connected
-    /*while (!stdio_usb_connected()){
+    while (!stdio_usb_connected()){
         sleep_ms(10);
-    }*/ 
+    }
+
     init_hat_sdk();
     sleep_ms(300); //Wait some time so initialization of USB and hat is done.
 
@@ -160,11 +161,6 @@ int main() {
                 NULL,               // (en) Arguments of the task 
                 2,                  // (en) Priority of this task
                 &printTask);    // (en) A handle to control the execution of this task
-
-    if(result != pdPASS) {
-        printf("Example Task creation failed\n");
-        return 0;
-    }
 
     xTaskCreate(usbTask, "usb", 1024, NULL, 3, &hUsb);
     #if (configNUMBER_OF_CORES > 1)
