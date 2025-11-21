@@ -1,4 +1,3 @@
-
 #include <stdio.h>
 #include <pico/stdlib.h>
 
@@ -17,7 +16,9 @@
 #define DEFAULT_STACK_SIZE 2048
 #define buffer_len 100
 #define UNIT_MS 100
-#define BUZZER_FREQUENCY 600
+#define BUZZER_FREQUENCY_HIGH 600
+#define BUZZER_FREQUENCY_LOW 300
+#define BUZZER_FREQUENCY_SEND 1000
 
 char buffer[buffer_len];
 int currentIndex = 0;
@@ -30,13 +31,14 @@ static void btn_fxn(uint gpio, uint32_t eventMask) {
         if (programState == IDLE) {
             programState = WRITING;
             usb_serial_print("Switched to WRITING\n");
+            toggle_red_led();
         }
-        else if (currentIndex != 0) {
-            programState = MSG_READY;
-            usb_serial_print("Switched to MSG_READY\n");
+        else {
+            programState = IDLE;
+            usb_serial_print("Switched to IDLE\n");
+            toggle_red_led();
         }
     }
-    toggle_led(); // Kertoo onko nappia painettu ja onko tilassa WRITING/IDLE
 }
 
 void ledFxn(bool isDot) {
@@ -56,17 +58,31 @@ void ledFxn(bool isDot) {
     }
 }
 
-void buzzerFnx(bool isDot) {
-    if (isDot) {
+void buzzerFnx(int numero_bzr) {
+    if (numero_bzr == 0) {
         // Piipataan buzzeria lyhyesti YHDEN "unit of timen" verran (100ms)
-        buzzer_play_tone(BUZZER_FREQUENCY, UNIT_MS);
+        buzzer_play_tone(BUZZER_FREQUENCY_HIGH, UNIT_MS);
         sleep_ms(UNIT_MS);
     }
-    else {
+    else if (numero_bzr == 1) {
         // Piipataan buzzeria pitkästi KOLMEN "unit of timen" verran (300ms)
-        buzzer_play_tone(BUZZER_FREQUENCY, 3*UNIT_MS);
+        buzzer_play_tone(BUZZER_FREQUENCY_HIGH, 3*UNIT_MS);
         sleep_ms(UNIT_MS);
     }
+    else if (numero_bzr == 2) {
+        // Piipataan buzzeria lyhyesti KOLMEN "unit of timen" verran (100ms) alemmalla taajuudella
+        buzzer_play_tone(BUZZER_FREQUENCY_LOW, 3*UNIT_MS);
+        sleep_ms(UNIT_MS);
+    }
+}
+
+void startup_jingle() {
+    // Käynnistys ääni
+    ledFxn(true);
+    buzzer_play_tone(984, UNIT_MS);
+    buzzer_play_tone(890, UNIT_MS);
+    buzzer_play_tone(1054, UNIT_MS);
+    ledFxn(true);
 }
 
 void imu_task(void *pvParameters) {
@@ -90,32 +106,33 @@ void imu_task(void *pvParameters) {
         usb_serial_print("Failed to initialize ICM-42670P.\n");
     }
     // Start collection data here. Infinite loop.
+    int space_count = 0;
     while (1)
     {
         if (programState == WRITING) {
             if (ICM42670_read_sensor_data(&ax, &ay, &az, &gx, &gy, &gz, &t) == 0) {
                 //sprintf(buf,"Accel: X=%.2f, Y=%.2f, Z=%.2f | Gyint currentIndex = 0;ro: X=%.2f, Y=%.2f, Z=%.2f| Temp: %2.2f°C\n", ax, ay, az, gx, gy, gz, t);
                 //usb_serial_print(buf);
-
                 if (ax < -0.7) {
                     // lähetetään piste
                     usb_serial_print(".");
                     buffer[currentIndex++] = '.';
-                    ledFxn(true);
-                    buzzerFnx(true);
+                    space_count = 0;
+                    buzzerFnx(0);
                 } else if (ax > 0.7) {
                     // lähetetään viiva
                     usb_serial_print("-");
                     buffer[currentIndex++] = '-';
-                    ledFxn(false);
-                    buzzerFnx(false);
-                } else if (ay < -0.7 && currentIndex != 0) { // Estetään välilyönnillä aloittaminen
+                    space_count = 0;
+                    buzzerFnx(1);
+                } else if (ay < -0.7 && currentIndex != 0 && space_count < 2) { // Estetään välilyönnillä aloittaminen
                     // lähetetään väli
                     usb_serial_print(" ");
                     buffer[currentIndex++] = ' ';
-                    ledFxn(true);
-                    buzzerFnx(true);
+                    space_count++;
+                    buzzerFnx(2);
                 } else if (ay > 0.7) {
+                    buffer[currentIndex] = '  \n';
                     programState = MSG_READY;
                 }
 
@@ -132,15 +149,21 @@ void send_task(void *pvParameters) {
     (void)pvParameters;
     while (1) {
         if (programState == MSG_READY) {
-            buffer[currentIndex] = '  \n';
+            // Ilmoitetaan käyttäjälle viestin lähetyksestä ja IDLE tilaan siirtymisestä
+            usb_serial_print("\nMessage: ");
+            buzzer_play_tone(BUZZER_FREQUENCY_SEND, UNIT_MS);
+            sleep_ms(50);
+            buzzer_play_tone(BUZZER_FREQUENCY_SEND, UNIT_MS);
             usb_serial_print(buffer);
             currentIndex = 0;
             memset(buffer, 0, sizeof buffer);
             programState = IDLE;
+            toggle_red_led();
         }
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
+
 
 // ---- Task running USB stack ----
 static void usbTask(void *arg) {
@@ -166,6 +189,8 @@ int main() {
     init_red_led();
     printf("Initializing leds\r\n");
 
+    startup_jingle(); // Play startup jingle and confirm successful initialization
+
     gpio_set_irq_enabled_with_callback(BUTTON1, GPIO_IRQ_EDGE_RISE, true, btn_fxn);
     gpio_set_irq_enabled(BUTTON2, GPIO_IRQ_EDGE_RISE, true);
 
@@ -190,4 +215,3 @@ int main() {
 
     return 0;
 }
-
